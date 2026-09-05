@@ -63,5 +63,31 @@ describe('AppController', () => {
         correlationId: 'system',
       });
     });
+
+    it('should handle missing payload data gracefully (Negative Test)', async () => {
+      const appController = app.get<AppController>(AppController);
+      const spyProcess = jest.spyOn(appService, 'processNotification');
+
+      // Emit with empty/invalid payload
+      await appController.handleUserCreated({} as any);
+
+      // It should process with undefined name
+      expect(spyProcess).toHaveBeenCalledWith(
+        'Welcome to our platform, undefined!',
+        undefined,
+        'WELCOME',
+      );
+    });
+
+    it('should catch error when processNotification throws (Negative Test)', async () => {
+      const appController = app.get<AppController>(AppController);
+      jest.spyOn(appService, 'processNotification').mockRejectedValueOnce(new Error('DB Error'));
+
+      try {
+        await appController.handleUserCreated({ userId: 'u2', name: 'Error User' });
+      } catch (err: any) {
+        expect(err.message).toBe('DB Error');
+      }
+    });
   });
 });

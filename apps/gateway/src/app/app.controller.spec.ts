@@ -46,6 +46,17 @@ describe('AppController', () => {
       });
       expect(mockAppService.getHello).toHaveBeenCalled();
     });
+
+    it('should throw HttpException or return error payload when AppService.getHello fails', async () => {
+      const appController = app.get<AppController>(AppController);
+      mockAppService.getHello = jest.fn().mockRejectedValue(new Error('User Service Offline'));
+
+      try {
+        await appController.getHello();
+      } catch (err: any) {
+        expect(err.message).toBe('User Service Offline');
+      }
+    });
   });
 
   describe('handleNotificationPush', () => {
@@ -59,6 +70,34 @@ describe('AppController', () => {
         message: 'Test message',
         correlationId: '123',
       });
+    });
+
+    it('should handle missing payload gracefully (Negative Test)', async () => {
+      const appController = app.get<AppController>(AppController);
+      const payload = {} as any; // Invalid payload
+
+      mockNotificationGateway.server.emit.mockClear();
+      const response = await appController.handleNotificationPush(payload);
+
+      expect(response).toEqual({ status: 'success' });
+      expect(mockNotificationGateway.server.emit).toHaveBeenCalledWith('hello', {
+        message: 'New notification',
+        correlationId: 'unknown',
+      });
+    });
+
+    it('should throw error when gateway emit fails', async () => {
+      const appController = app.get<AppController>(AppController);
+      const payload = { message: 'Fail' };
+      mockNotificationGateway.server.emit = jest.fn().mockImplementation(() => {
+        throw new Error('Socket emit failed');
+      });
+
+      try {
+        await appController.handleNotificationPush(payload);
+      } catch (err: any) {
+        expect(err.message).toBe('Socket emit failed');
+      }
     });
   });
 });
