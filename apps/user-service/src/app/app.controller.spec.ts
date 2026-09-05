@@ -73,6 +73,17 @@ describe('AppController', () => {
       });
       expect(mockPinoLogger.assign).toHaveBeenCalledWith({ correlationId: 'test-123' });
     });
+
+    it('should handle missing payload properties gracefully (Negative Test)', async () => {
+      const appController = app.get<AppController>(AppController);
+      const mockContext = {} as TcpContext;
+      const result = await appController.hello({} as any, mockContext);
+
+      expect(result).toEqual({
+        message: 'Hello World from User Service',
+        correlationId: 'unknown',
+      });
+    });
   });
 
   describe('handleTestEvent', () => {
@@ -88,6 +99,23 @@ describe('AppController', () => {
         message: 'Hello RMQ',
         correlationId: 'test-corr-456',
       });
+    });
+
+    it('should catch error when RMQ emit fails (Negative Test)', async () => {
+      const appController = app.get<AppController>(AppController);
+      const mockRmqClient = app.get('NOTIFICATION_SERVICE_RMQ');
+
+      mockRmqClient.emit = jest.fn().mockImplementation(() => {
+        throw new Error('RMQ Disconnected');
+      });
+
+      const payload = { message: 'Hello RMQ' };
+
+      try {
+        await appController.handleTestEvent(payload);
+      } catch (err: any) {
+        expect(err.message).toBe('RMQ Disconnected');
+      }
     });
   });
 });
