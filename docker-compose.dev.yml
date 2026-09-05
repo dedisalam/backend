@@ -21,35 +21,6 @@ services:
     ports:
       - '6379:6379'
 
-  gateway:
-    extends:
-      file: docker-compose.yml
-      service: gateway
-    ports:
-      - '3000:3000'
-
-  user-service:
-    extends:
-      file: docker-compose.yml
-      service: user-service
-
-  notification-service:
-    extends:
-      file: docker-compose.yml
-      service: notification-service
-
-  web:
-    extends:
-      file: docker-compose.yml
-      service: web
-    ports:
-      - '4200:4200'
-
-  nginx:
-    extends:
-      file: docker-compose.yml
-      service: nginx
-
 networks:
   backend_network:
     driver: bridge

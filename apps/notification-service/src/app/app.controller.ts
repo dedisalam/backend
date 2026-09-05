@@ -20,7 +20,7 @@ export class AppController {
     @Inject('GATEWAY_SERVICE') private readonly gatewayClient: ClientProxy,
   ) {}
 
-  @EventPattern('notification.send')
+  @EventPattern('test.hello')
   async handleNotificationSend(
     @Payload() data: { message?: string; userId?: string; type?: string; correlationId?: string },
   ) {
